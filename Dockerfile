@@ -1,10 +1,15 @@
-# Use an official Python base image
 FROM python:3.10-slim
-# Set working directory
+
 WORKDIR /app
-# Copy files into the container
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Install test dependencies
+RUN pip install --no-cache-dir pytest
+
 COPY . .
-# Tell Docker how to start your app
+
+RUN chmod +x run-test.sh
+
 CMD ["python", "app.py"]

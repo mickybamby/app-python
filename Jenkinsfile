@@ -27,14 +27,15 @@ pipeline {
         }
 
         stage('Test Docker Image') {
-            steps {
-                script {
-                    dockerImage.inside {
-                        sh './run-test.sh'
-                    }
-                }
+    steps {
+        script {
+            dockerImage.inside('--user root') {
+                sh './run-test.sh'
             }
         }
+    }
+}
+
 
         stage('Push to Docker Hub') {
             steps {
