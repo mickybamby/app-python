@@ -30,7 +30,7 @@ pipeline {
             steps {
                 script {
                     dockerImage.inside {
-                        sh './run-tests.sh'
+                        sh './run-test.sh'
                     }
                 }
             }
