@@ -22,18 +22,20 @@ pipeline {
             }
         }
 
-        stage('Build & Push to DockerHub') {
+        
+        stage('Build & Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER_ENV')]) {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh """
+                        echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                         docker build -t ${DOCKER_HUB_REG}:${IMAGE_TAG} .
-                        echo \$DOCKER_PASS | docker login -u \$DOCKER_USER_ENV --password-stdin
                         docker push ${DOCKER_HUB_REG}:${IMAGE_TAG}
                     """
                 }
             }
         }
-
+        
+        
         stage('Update Manifests') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
