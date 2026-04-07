@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def hello():
-    return "Hello from inside a Docker container. Yes I deployed my first container1!"
+    return "Hello from inside a Docker container. Yes I deployed my first container on Jenkins!"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
