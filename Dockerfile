@@ -1,6 +1,6 @@
 # ============================================================
 # Stage 1 — builder
-# Compiles wheels + runs test suite. Never shipped.
+# Compiles wheels + runs test suite
 # ============================================================
 FROM python:3.10-slim AS builder
 
