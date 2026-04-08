@@ -20,16 +20,15 @@ pipeline {
             steps {
                 echo 'Running SonarQube Analysis...'
                 withSonarQubeEnv('SonarQube') {
-                        sh '''
-                            sonar-scanner \
-                            -Dsonar.projectKey=app-python \
-                            -Dsonar.sources=. \
-                            -Dsonar.python.version=3
-                        '''
-                    }
+                    sh '''
+                        sonar-scanner \
+                        -Dsonar.projectKey=app-python \
+                        -Dsonar.sources=. \
+                        -Dsonar.python.version=3
+                    '''
                 }
             }
-        }
+        } // Corrected braces here
 
         stage('Code Quality Gate') {
             steps {
