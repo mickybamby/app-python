@@ -16,37 +16,39 @@ pipeline {
             }
         }
 
-        
         stage('Run Tests') {
             steps {
                 echo 'Running tests...'
                 sh '''
-                mkdir -p reports
-                pip3 install pytest pytest-cov --quiet --break-system-packages
-                pytest --junitxml=reports/test-results.xml \
-                   --cov=. --cov-report=xml:reports/coverage.xml
-            '''
-    }
-}
+                    mkdir -p reports
+                    pip3 install pytest pytest-cov --quiet --break-system-packages
+                    pytest --junitxml=reports/test-results.xml \
+                           --cov=. --cov-report=xml:reports/coverage.xml
+                '''
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube Analysis...'
-        // Ensure the 'SonarQube' name here matches the server configuration under "Manage Jenkins > Configure System"
                 withSonarQubeEnv('SonarQube') {
-                sh '''
-                sonar-scanner \
-                -Dsonar.projectKey=app-python \
-                -Dsonar.sources=. \
-                -Dsonar.python.version=3 \
-                -Dsonar.junit.reportPaths=reports/test-results.xml
-            '''
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+                        sh '''
+                            sonar-scanner \
+                            -Dsonar.projectKey=app-python \
+                            -Dsonar.sources=. \
+                            -Dsonar.python.version=3 \
+                            -Dsonar.junit.reportPaths=reports/test-results.xml \
+                            -Dsonar.python.coverage.reportPaths=reports/coverage.xml \
+                            -Dsonar.login=$SONAR_TOKEN
+                        '''
+                    }
+                }
+            }
         }
-    }
-}
 
         stage('Code Quality Gate') {
             steps {
-                // timeout prevents the pipeline from hanging forever if SonarQube is slow
                 timeout(time: 5, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: false 
                 }
@@ -57,8 +59,9 @@ pipeline {
             steps {
                 echo 'Running OWASP Dependency Check...'
                 sh '''
-                dependency-check.sh --project app-python --scan . --format ALL --out reports/dependency-check
-            '''
+                    mkdir -p reports/dependency-check
+                    dependency-check.sh --project app-python --scan . --format ALL --out reports/dependency-check
+                '''
             }
         }
         
@@ -66,8 +69,9 @@ pipeline {
             steps {
                 echo 'Running Trivy Scan...'
                 sh '''
-                trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table . > reports/trivy/trivy-results.txt || true
-            '''
+                    mkdir -p reports/trivy
+                    trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table . > reports/trivy/trivy-results.txt || true
+                '''
             }
         }
 
@@ -83,7 +87,6 @@ pipeline {
             }
         }
         
-        
         stage('Update Manifests') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
@@ -95,7 +98,7 @@ pipeline {
                         git config user.email "jenkins@yourdomain.com"
                         git config user.name "Jenkins CI"
                         git add deployment.yaml
-                        git commit -m "Update image to ${DOCKER_HUB_REG}:${IMAGE_TAG} [skip ci]"
+                        git commit -m "Update image to ${DOCKER_HUB_REG}:${IMAGE_TAG} [skip ci]" || echo "No changes to commit"
                         git push origin main
                     """
                 }
