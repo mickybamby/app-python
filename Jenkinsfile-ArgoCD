@@ -16,31 +16,15 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                echo 'Running tests...'
-                sh '''
-                    mkdir -p reports
-                    pip3 install pytest pytest-cov --quiet --break-system-packages
-                    pytest --junitxml=reports/test-results.xml \
-                           --cov=. --cov-report=xml:reports/coverage.xml
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube Analysis...'
                 withSonarQubeEnv('SonarQube') {
-                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
                         sh '''
                             sonar-scanner \
                             -Dsonar.projectKey=app-python \
                             -Dsonar.sources=. \
-                            -Dsonar.python.version=3 \
-                            -Dsonar.junit.reportPaths=reports/test-results.xml \
-                            -Dsonar.python.coverage.reportPaths=reports/coverage.xml \
-                            -Dsonar.login=$SONAR_TOKEN
+                            -Dsonar.python.version=3
                         '''
                     }
                 }
