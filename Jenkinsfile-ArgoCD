@@ -15,14 +15,58 @@ pipeline {
                     url: 'https://github.com/mickybamby/app-python.git'
             }
         }
-
-        stage('Test & Scan') {
+        stage('Run Tests') {
             steps {
-                echo 'Running Tests...'
+                echo 'Running tests...'
+                sh '''
+                mkdir -p reports
+                pytest --junitxml=reports/test-results.xml
+            '''     
+    }
+}
+        stage('SonarQube Analysis') {
+            steps {
+                echo 'Running SonarQube Analysis...'
+        // Ensure the 'SonarQube' name here matches the server configuration under "Manage Jenkins > Configure System"
+                withSonarQubeEnv('SonarQube') {
+                sh '''
+                sonar-scanner \
+                -Dsonar.projectKey=app-python \
+                -Dsonar.sources=. \
+                -Dsonar.python.version=3 \
+                -Dsonar.junit.reportPaths=reports/test-results.xml
+            '''
+        }
+    }
+}
+
+        stage('Code Quality Gate') {
+            steps {
+                // timeout prevents the pipeline from hanging forever if SonarQube is slow
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: false 
+                }
+            }
+        }
+        
+        stage('owasp Dependency Check') {
+            steps {
+                echo 'Running OWASP Dependency Check...'
+                sh '''
+                dependency-check.sh --project app-python --scan . --format ALL --out reports/dependency-check
+            '''
+            }
+        }
+        
+        stage('trivy Check') {
+            steps {
+                echo 'Running Trivy Scan...'
+                sh '''
+                trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table . > reports/trivy/trivy-results.txt || true
+            '''
             }
         }
 
-        
         stage('Build & Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
