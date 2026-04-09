@@ -88,7 +88,7 @@ pipeline {
         
         stage('Update Manifests') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
+                withCredentials([usernamePassword(credentialsId: 'GIT_TOKEN', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
                     sh """
                         rm -rf dev
                         git clone https://\${GIT_USER}:\${GIT_TOKEN}@github.com/mickybamby/dev.git
