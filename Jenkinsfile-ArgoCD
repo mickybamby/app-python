@@ -8,6 +8,12 @@ pipeline {
     }
 
     stages {
+        stage('Cleaning Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -19,7 +25,6 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo 'Running SonarQube Analysis...'
-                // This 'def' line finds the path to the scanner tool you defined in Global Tool Configuration
                 script {
                     def scannerHome = tool 'sonar-scanner' 
                     withSonarQubeEnv('SonarQube') {
@@ -45,18 +50,18 @@ pipeline {
                 echo 'Running OWASP Dependency Check...'
                 script {
                     def dpcheckHome = tool 'DP-Check'
-            
-                        sh """
-                            mkdir -p reports/dependency-check
-                            ${dpcheckHome}/bin/dependency-check.sh \
-                            --project app-python \
-                            --scan . \
-                            --format ALL \
-                            --out reports/dependency-check
-                        """
+                    sh """
+                        mkdir -p reports/dependency-check
+                        ${dpcheckHome}/bin/dependency-check.sh \
+                        --project app-python \
+                        --scan . \
+                        --format ALL \
+                        --out reports/dependency-check
+                    """
+                }
+            }
         }
-    }
-}
+
         stage('trivy Check') {
             steps {
                 echo 'Running Trivy Scan...'
@@ -71,6 +76,8 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
                     sh """
+                        docker system prune -f
+                        docker container prune -f
                         echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin
                         docker build -t ${DOCKER_HUB_REG}:${IMAGE_TAG} .
                         docker push ${DOCKER_HUB_REG}:${IMAGE_TAG}
