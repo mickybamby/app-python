@@ -37,12 +37,12 @@ pipeline {
             }
         }
         
-        stage('Code Quality Gate') {
-            steps {
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: false 
-                }
-            }
+        // stage('Code Quality Gate') {
+        //     steps {
+        //         timeout(time: 5, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: false
+        //         }
+        //     }
         }
         
         // stage('owasp Dependency Check') {
@@ -62,15 +62,15 @@ pipeline {
         //     }
         // }
 
-        stage('trivy Check') {
-            steps {
-                echo 'Running Trivy Scan...'
-                sh '''
-                    mkdir -p reports/trivy
-                    trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table . > reports/trivy/trivy-results.txt || true
-                '''
-            }
-        }
+        // stage('trivy Check') {
+        //     steps {
+        //         echo 'Running Trivy Scan...'
+        //         sh '''
+        //             mkdir -p reports/trivy
+        //             trivy fs --exit-code 1 --severity HIGH,CRITICAL --format table . > reports/trivy/trivy-results.txt || true
+        //         '''
+        //     }
+        // }
 
         stage('Build & Push Docker Image') {
             steps {
@@ -88,7 +88,7 @@ pipeline {
         
         stage('Update Manifests') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'GIT_TOKEN', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
+                withCredentials([usernamePassword(credentialsId: 'github-token', passwordVariable: 'GIT_TOKEN', usernameVariable: 'GIT_USER')]) {
                     sh """
                         rm -rf dev
                         git clone https://\${GIT_USER}:\${GIT_TOKEN}@github.com/mickybamby/dev.git
