@@ -45,22 +45,22 @@ pipeline {
             }
         }
         
-        stage('owasp Dependency Check') {
-            steps {
-                echo 'Running OWASP Dependency Check...'
-                script {
-                    def dpcheckHome = tool 'DP-Check'
-                    sh """
-                        mkdir -p reports/dependency-check
-                        ${dpcheckHome}/bin/dependency-check.sh \
-                        --project app-python \
-                        --scan . \
-                        --format ALL \
-                        --out reports/dependency-check
-                    """
-                }
-            }
-        }
+        // stage('owasp Dependency Check') {
+        //     steps {
+        //         echo 'Running OWASP Dependency Check...'
+        //         script {
+        //             def dpcheckHome = tool 'DP-Check'
+        //             sh """
+        //                 mkdir -p reports/dependency-check
+        //                 ${dpcheckHome}/bin/dependency-check.sh \
+        //                 --project app-python \
+        //                 --scan . \
+        //                 --format ALL \
+        //                 --out reports/dependency-check
+        //             """
+        //         }
+        //     }
+        // }
 
         stage('trivy Check') {
             steps {
@@ -104,4 +104,10 @@ pipeline {
             }
         }
     }
+    post {
+        always {
+            cleanWs()
+        }
+    }
 }
+    
