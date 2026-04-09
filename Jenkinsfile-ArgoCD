@@ -1,7 +1,6 @@
 pipeline {
     agent any
     environment {
-        SCANNER_HOME=tool 'sonar-scanner'
         DOCKER_USER    = 'mickybamby'
         IMAGE_NAME     = 'app-python'
         IMAGE_TAG      = "v${env.BUILD_NUMBER}"
@@ -33,7 +32,6 @@ pipeline {
             }
         }
         
-
         stage('Code Quality Gate') {
             steps {
                 timeout(time: 5, unit: 'MINUTES') {
@@ -45,13 +43,20 @@ pipeline {
         stage('owasp Dependency Check') {
             steps {
                 echo 'Running OWASP Dependency Check...'
-                sh '''
-                    mkdir -p reports/dependency-check
-                    dependency-check.sh --project app-python --scan . --format ALL --out reports/dependency-check
-                '''
-            }
+                script {
+                    def dpcheckHome = tool 'DP-Check'
+            
+                        sh """
+                            mkdir -p reports/dependency-check
+                            ${dpcheckHome}/bin/dependency-check.sh \
+                            --project app-python \
+                            --scan . \
+                            --format ALL \
+                            --out reports/dependency-check
+                        """
         }
-        
+    }
+}
         stage('trivy Check') {
             steps {
                 echo 'Running Trivy Scan...'
