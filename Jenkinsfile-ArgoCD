@@ -1,6 +1,7 @@
 pipeline {
     agent any
     environment {
+        SCANNER_HOME=tool 'sonar-scanner'
         DOCKER_USER    = 'mickybamby'
         IMAGE_NAME     = 'app-python'
         IMAGE_TAG      = "v${env.BUILD_NUMBER}"
